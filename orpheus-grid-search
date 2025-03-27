@@ -1,0 +1,8 @@
+#!/usr/bin/env python3
+"""
+Standalone script to run the Orpheus TTS grid search from the command line.
+"""
+from orpheus_tts.grid_search import main
+
+if __name__ == "__main__":
+    main() 

@@ -1,4 +1,3 @@
-from llama_cpp import Llama
 import os
 import sys
 import requests
@@ -12,18 +11,16 @@ import threading
 import queue
 import asyncio
 
-
 # LM Studio API settings
-API_URL = "http://127.0.0.1:8080/v1/completions"
+API_URL = "http://127.0.0.1:1234/v1/completions"
 HEADERS = {"Content-Type": "application/json"}
 
 # Model parameters
-MAX_TOKENS = 4096
+MAX_TOKENS = 1200
 TEMPERATURE = 0.6
 TOP_P = 0.9
 REPETITION_PENALTY = 1.1
 SAMPLE_RATE = 24000  # SNAC model uses 24kHz
-
 
 # Available voices based on the Orpheus-TTS repository
 AVAILABLE_VOICES = ["tara", "leah", "jess", "leo", "dan", "mia", "zac", "zoe"]
@@ -39,7 +36,8 @@ def format_prompt(prompt, voice=DEFAULT_VOICE):
     """Format prompt for Orpheus model with voice prefix and special tokens."""
     if voice not in AVAILABLE_VOICES:
         print(
-            f"Warning: Voice '{voice}' not recognized. Using '{DEFAULT_VOICE}' instead."
+            f"Warning: Voice '{voice}' not recognized. Using '{
+                DEFAULT_VOICE}' instead."
         )
         voice = DEFAULT_VOICE
 
@@ -61,37 +59,54 @@ def generate_tokens_from_api(
     max_tokens=MAX_TOKENS,
     repetition_penalty=REPETITION_PENALTY,
 ):
-    """Generate tokens from text using llama-server's OpenAI-compatible endpoint."""
+    """Generate tokens from text using LM Studio API."""
     formatted_prompt = format_prompt(prompt, voice)
     print(f"Generating speech for: {formatted_prompt}")
 
+    # Create the request payload for the LM Studio API
     payload = {
+        # Model name can be anything, LM Studio ignores it
+        "model": "orpheus-3b-0.1-ft-q4_k_m",
         "prompt": formatted_prompt,
+        "max_tokens": max_tokens,
         "temperature": temperature,
         "top_p": top_p,
-        "max_tokens": max_tokens,
-        "stop": None,
-        "stream": True,
         "repeat_penalty": repetition_penalty,
+        "stream": True,
     }
 
-    with requests.post(API_URL, headers=HEADERS, json=payload, stream=True) as response:
-        if response.status_code != 200:
-            raise RuntimeError(
-                f"Error from llama-server: {response.status_code}, {response.text}"
-            )
+    # Make the API request with streaming
+    response = requests.post(API_URL, headers=HEADERS,
+                             json=payload, stream=True)
 
-        for line in response.iter_lines(decode_unicode=True):
+    if response.status_code != 200:
+        print(f"Error: API request failed with status code {
+              response.status_code}")
+        print(f"Error details: {response.text}")
+        return
+
+    # Process the streamed response
+    token_counter = 0
+    for line in response.iter_lines():
+        if line:
+            line = line.decode("utf-8")
             if line.startswith("data: "):
-                json_data = line[len("data: ") :]
-                if json_data.strip() == "[DONE]":
+                data_str = line[6:]  # Remove the 'data: ' prefix
+                if data_str.strip() == "[DONE]":
                     break
+
                 try:
-                    data = json.loads(json_data)
-                    token_text = data["choices"][0]["text"]
-                    yield token_text
-                except Exception as e:
-                    print(f"Error parsing streamed response: {e}")
+                    data = json.loads(data_str)
+                    if "choices" in data and len(data["choices"]) > 0:
+                        token_text = data["choices"][0].get("text", "")
+                        token_counter += 1
+                        if token_text:
+                            yield token_text
+                except json.JSONDecodeError as e:
+                    print(f"Error decoding JSON: {e}")
+                    continue
+
+    print("Token generation complete")
 
 
 def turn_token_into_id(token_string, index):
@@ -155,7 +170,8 @@ def tokens_decoder_sync(syn_token_gen, output_file=None):
     wav_file = None
     if output_file:
         # Create directory if it doesn't exist
-        os.makedirs(os.path.dirname(os.path.abspath(output_file)), exist_ok=True)
+        os.makedirs(os.path.dirname(
+            os.path.abspath(output_file)), exist_ok=True)
         wav_file = wave.open(output_file, "wb")
         wav_file.setnchannels(1)
         wav_file.setsampwidth(2)
@@ -198,7 +214,8 @@ def tokens_decoder_sync(syn_token_gen, output_file=None):
 
     # Calculate and print duration
     duration = (
-        sum([len(segment) // (2 * 1) for segment in audio_segments]) / SAMPLE_RATE
+        sum([len(segment) // (2 * 1)
+            for segment in audio_segments]) / SAMPLE_RATE
     )
     print(f"Generated {len(audio_segments)} audio segments")
     print(f"Generated {duration:.2f} seconds of audio")
@@ -263,6 +280,8 @@ def main():
         description="Orpheus Text-to-Speech using LM Studio API"
     )
     parser.add_argument("--text", type=str, help="Text to convert to speech")
+    parser.add_argument("--file", type=str,
+                        help="Path to a text file to read from")
     parser.add_argument(
         "--voice",
         type=str,
@@ -289,33 +308,30 @@ def main():
         help="Repetition penalty (>=1.1 required for stable generation)",
     )
 
-    parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Print generated tokens and decoder debug info",
-    )
-
     args = parser.parse_args()
 
     if args.list_voices:
         list_available_voices()
         return
 
-    # Use text from command line or prompt user
-    prompt = args.text
+    # Check if user provided a file. If so, read text from the file.
+    prompt = None
+    if args.file:
+        if not os.path.exists(args.file):
+            print(f"Error: File '{args.file}' does not exist.")
+            sys.exit(1)
+        with open(args.file, "r", encoding="utf-8") as f:
+            prompt = f.read().strip()
+
+    # If prompt is still None or empty, check --text
     if not prompt:
-        if len(sys.argv) > 1 and sys.argv[1] not in (
-            "--voice",
-            "--output",
-            "--temperature",
-            "--top_p",
-            "--repetition_penalty",
-        ):
-            prompt = " ".join([arg for arg in sys.argv[1:] if not arg.startswith("--")])
-        else:
-            prompt = input("Enter text to synthesize: ")
-            if not prompt:
-                prompt = "Hello, I am Orpheus, an AI assistant with emotional speech capabilities."
+        prompt = args.text
+
+    # If there's still no prompt, ask user
+    if not prompt:
+        prompt = input("Enter text to synthesize: ")
+        if not prompt:
+            prompt = "Hello, I am Orpheus, an AI assistant with emotional speech capabilities."
 
     # Default output file if none provided
     output_file = args.output
@@ -339,7 +355,8 @@ def main():
     )
     end_time = time.time()
 
-    print(f"Speech generation completed in {end_time - start_time:.2f} seconds")
+    print(f"Speech generation completed in {
+          end_time - start_time:.2f} seconds")
     print(f"Audio saved to {output_file}")
 
 

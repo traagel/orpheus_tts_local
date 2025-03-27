@@ -1,50 +1,60 @@
-# Orpheus-TTS-Local
+# Orpheus TTS
 
-A lightweight client for running [Orpheus TTS](https://huggingface.co/canopylabs/orpheus-3b-0.1-ft) locally using LM Studio API.
+A Python package for text-to-speech using Orpheus models.
 
-## Features
+## Installation
 
-- 🎧 High-quality Text-to-Speech using the Orpheus TTS model
-- 💻 Completely local - no cloud API keys needed
-- 🔊 Multiple voice options (tara, leah, jess, leo, dan, mia, zac, zoe)
-- 💾 Save audio to WAV files
-
-## Quick Setup
-
-1. Install [LM Studio](https://lmstudio.ai/) 
-2. Download the [Orpheus TTS model (orpheus-3b-0.1-ft-q4_k_m.gguf)](https://huggingface.co/isaiahbjork/orpheus-3b-0.1-ft-Q4_K_M-GGUF) in LM Studio
-3. Load the Orpheus model in LM Studio
-4. Start the local server in LM Studio (default: http://127.0.0.1:1234)
-5. Install dependencies:
-   ```
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
-   ```
-6. Run the script:
-   ```
-   python gguf_orpheus.py --text "Hello, this is a test" --voice tara
-   ```
+```bash
+pip install -e .
+```
 
 ## Usage
 
-```
-python gguf_orpheus.py --text "Your text here" --voice tara --output "output.wav"
+### Command Line
+
+```bash
+# Generate speech from text
+orpheus-tts --text "Hello, this is a test of the Orpheus text-to-speech system."
+
+# Use a specific voice
+orpheus-tts --text "Hello, this is a test." --voice leo
+
+# List available voices
+orpheus-tts --list-voices
+
+# Read text from a file
+orpheus-tts --file input.txt
+
+# Specify output file
+orpheus-tts --text "Hello world" --output output.wav
+
+# Adjust generation parameters
+orpheus-tts --text "Hello world" --temperature 0.7 --top_p 0.95 --repetition_penalty 1.2
 ```
 
-### Options
+### Python API
 
-- `--text`: The text to convert to speech
-- `--voice`: The voice to use (default: tara)
-- `--output`: Output WAV file path (default: auto-generated filename)
-- `--list-voices`: Show available voices
-- `--temperature`: Temperature for generation (default: 0.6)
-- `--top_p`: Top-p sampling parameter (default: 0.9)
-- `--repetition_penalty`: Repetition penalty (default: 1.1)
+```python
+from orpheus_tts.synthesizer import generate_speech, list_available_voices
+
+# List available voices
+list_available_voices()
+
+# Generate speech
+audio_segments = generate_speech(
+    prompt="Hello, this is a test of the Orpheus text-to-speech system.",
+    voice="tara",
+    output_file="output.wav",
+    temperature=0.6,
+    top_p=0.9,
+    repetition_penalty=1.1,
+    verbose=False
+)
+```
 
 ## Available Voices
 
-- tara - Best overall voice for general use (default)
+- tara (default)
 - leah
 - jess
 - leo
@@ -53,19 +63,79 @@ python gguf_orpheus.py --text "Your text here" --voice tara --output "output.wav
 - zac
 - zoe
 
-## Emotion
-You can add emotion to the speech by adding the following tags:
-```xml
-<giggle>
-<laugh>
-<chuckle>
-<sigh>
-<cough>
-<sniffle>
-<groan>
-<yawn>
-<gasp>
+## Emotion Tags
+
+You can add emotion tags to your text to add emotional expression:
+
+- `<laugh>`
+- `<chuckle>`
+- `<sigh>`
+- `<cough>`
+- `<sniffle>`
+- `<groan>`
+- `<yawn>`
+- `<gasp>`
+
+Example: "I'm really excited about this project `<laugh>`. It's going to be great!"
+
+## Benchmarking
+
+The package includes a comprehensive benchmarking tool to optimize hyperparameters and determine limitations:
+
+```bash
+# Run all benchmarks with default settings
+./orpheus-benchmark
+
+# Test with a specific voice
+./orpheus-benchmark --voice leo
+
+# Name your benchmark run for easier reference
+./orpheus-benchmark --run-name my_special_benchmark
+
+# Benchmark only specific parameters
+./orpheus-benchmark --skip-length --skip-top-p
+
+# Control the testing range (default max-length is 3000, step is 250)
+./orpheus-benchmark --max-length 2000 --length-step 200 --test-length 500
+
+# Get verbose output
+./orpheus-benchmark --verbose
 ```
+
+The benchmark tool will test:
+- Maximum text length before failure
+- Optimal temperature values
+- Optimal top_p values
+- Optimal repetition_penalty values
+
+Results are saved in a subfolder with your benchmark run name (or auto-generated name based on voice and timestamp). Each benchmark run includes:
+- WAV audio samples for each test
+- CSV files with detailed results for each parameter test
+- A comprehensive summary report with recommended settings
+- A detailed JSON metadata file with all test parameters and results
+
+With this structure, you can easily compare different benchmark runs and find optimal settings for your specific use case.
+
+### For Developers
+
+The benchmark functionality has been refactored into a modular structure under the `orpheus_tts/benchmark/` directory, making it easier to maintain and extend:
+
+- `__init__.py` - Main entry point and argument parsing
+- `text_length.py` - Text length benchmarking functions
+- `parameters.py` - Parameter optimization (temperature, top_p, repetition_penalty)
+- `reporting.py` - Report generation and metadata handling
+- `utils.py` - Common utilities for benchmarking
+
+If you want to add new benchmark tests, you can create a new module in the benchmark package and integrate it with the main entry point.
+
+## Requirements
+
+- Python 3.7+
+- llama-cpp-python
+- requests
+- numpy
+- sounddevice
+- An Orpheus model loaded in LM Studio (server running on port 8080)
 
 ## License
 

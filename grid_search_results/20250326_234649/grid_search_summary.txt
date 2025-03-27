@@ -1,0 +1,43 @@
+Orpheus TTS Grid Search
+======================
+
+Date: 2025-03-27 00:11:06
+Total Runs: 512
+Total Time: 0:24:15
+
+Parameter Ranges:
+- Voices: tara, leah, jess, leo, dan, mia, zac, zoe
+- Temperatures: 0.3, 0.6, 0.9, 1.2
+- Top-p values: 0.3, 0.6, 0.8, 0.95
+- Repetition penalties: 1.1, 1.3, 1.5, 1.8
+- Max tokens: 500
+
+Test text: "This is a short sample text for the grid search."
+
+Results Summary:
+- tara: 64/64 successful
+- leah: 64/64 successful
+- jess: 64/64 successful
+- leo: 64/64 successful
+- dan: 64/64 successful
+- mia: 64/64 successful
+- zac: 64/64 successful
+- zoe: 64/64 successful
+
+Best combinations for each voice (fastest successful run):
+- tara: temp=1.2, top_p=0.8, rep_penalty=1.5, time=2.37s
+  File: grid_search_results/20250326_234649/tara/tara_temp_1.2_top_p_0.80_rep_penalty_1.5.wav
+- leah: temp=0.3, top_p=0.6, rep_penalty=1.8, time=2.41s
+  File: grid_search_results/20250326_234649/leah/leah_temp_0.3_top_p_0.60_rep_penalty_1.8.wav
+- jess: temp=1.2, top_p=0.8, rep_penalty=1.5, time=2.22s
+  File: grid_search_results/20250326_234649/jess/jess_temp_1.2_top_p_0.80_rep_penalty_1.5.wav
+- leo: temp=0.6, top_p=0.8, rep_penalty=1.8, time=2.19s
+  File: grid_search_results/20250326_234649/leo/leo_temp_0.6_top_p_0.80_rep_penalty_1.8.wav
+- dan: temp=0.3, top_p=0.6, rep_penalty=1.8, time=2.45s
+  File: grid_search_results/20250326_234649/dan/dan_temp_0.3_top_p_0.60_rep_penalty_1.8.wav
+- mia: temp=0.9, top_p=0.3, rep_penalty=1.1, time=2.34s
+  File: grid_search_results/20250326_234649/mia/mia_temp_0.9_top_p_0.30_rep_penalty_1.1.wav
+- zac: temp=1.2, top_p=0.95, rep_penalty=1.3, time=2.30s
+  File: grid_search_results/20250326_234649/zac/zac_temp_1.2_top_p_0.95_rep_penalty_1.3.wav
+- zoe: temp=0.6, top_p=0.95, rep_penalty=1.8, time=2.48s
+  File: grid_search_results/20250326_234649/zoe/zoe_temp_0.6_top_p_0.95_rep_penalty_1.8.wav

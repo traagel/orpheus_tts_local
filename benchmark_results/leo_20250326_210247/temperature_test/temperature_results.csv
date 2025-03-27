@@ -1,0 +1,8 @@
+Temperature,Success,Time (s),Audio File
+0.1,True,52.57668662071228,temp_0.1.wav
+0.3,True,52.22536587715149,temp_0.3.wav
+0.5,True,51.20556664466858,temp_0.5.wav
+0.7,True,50.519176959991455,temp_0.7.wav
+0.9,True,52.573038816452026,temp_0.9.wav
+1.0,True,50.45548176765442,temp_1.0.wav
+1.2,True,50.10334658622742,temp_1.2.wav

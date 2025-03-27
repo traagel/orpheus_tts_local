@@ -1,0 +1,8 @@
+Top-p,Success,Time (s),Audio File
+0.1,True,50.9974844455719,top_p_0.1.wav
+0.3,True,51.70595574378967,top_p_0.3.wav
+0.5,True,52.13373255729675,top_p_0.5.wav
+0.7,True,52.268303632736206,top_p_0.7.wav
+0.9,True,52.02262902259827,top_p_0.9.wav
+0.95,True,51.65385413169861,top_p_0.95.wav
+1.0,True,49.60531687736511,top_p_1.0.wav
